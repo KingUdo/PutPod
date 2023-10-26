@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+  PutPod:
+    image: putpod:latest
+    container_name: putpod
+    restart: unless-stopped
+    volumes:
+      - ./putpod.db:/app/putpod.db
+      - ./malware/:/app/malware/
+    networks:
+      - putpod
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+
+networks:
+  putpod:
+    external: true
