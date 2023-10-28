@@ -1,6 +1,28 @@
 version: "3"
 
 services:
+  Haproxy:
+    image: Haproxy:latest
+    container_name: Haproxy
+    restart: always
+    ports:
+      - "80:80"       #TLS redirection
+      - "443:443"     #TLS
+
+    volumes:
+      - ./Haproxy.cfg:/usr/local/etc/Haproxy/Haproxy.cfg:ro
+      - ./certs/:/etc/Haproxy/certs/:ro
+
+    networks:
+      - putpod
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+
+
   PutPod:
     image: putpod:latest
     container_name: putpod

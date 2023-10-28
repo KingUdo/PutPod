@@ -1,0 +1,51 @@
+global
+    tune.ssl.default-dh-param 4096
+    log stdout format raw local0 debug
+    ssl-default-bind-ciphers ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-CCM:DHE-RSA-AES256-CCM:TLS13-CHACHA20-POLY1305-SHA256
+    ssl-default-bind-options no-sslv3 no-tlsv10 no-tlsv11
+    ssl-default-server-options no-sslv3 no-tlsv10 no-tlsv11
+    ssl-default-server-ciphers ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-CCM:DHE-RSA-AES256-CCM:TLS13-CHACHA20-POLY1305-SHA256
+
+defaults
+    mode tcp
+    option tcplog
+    option httpslog
+    log global
+    option  http-server-close
+    option  dontlognull
+    option  redispatch
+    option  contstats
+
+    default-server init-addr last,libc,none #ignore if a server dns can't be resolved
+
+    timeout connect 2000ms
+    timeout client 120000ms
+    timeout server 120000ms
+    timeout tunnel 3600s
+
+
+######################### FRONTEND ##########################
+# TLS forwarding
+frontend http
+    bind *:80
+    redirect scheme https code 301 if !{ ssl_fc }
+    mode http
+
+# TLS Frontend
+frontend https-in
+    bind *:443 ssl crt /etc/haproxy/certs/domain.pem
+    mode http
+
+    #Set the X-Forward header to tell the backend services, that the connection is encrypted
+    http-request set-header X-Forwarded-Proto https
+
+    log-format "%ci:%cp %ST %{+Q}[ssl_c_s_dn(emailAddress)] %b %hr %hs %{+Q}r"
+
+    default_backend putpod
+
+######################### BACKEND #####################
+# putpod
+backend putpod
+    mode http
+    http-request set-header X-Remote-Ip %[src]
+    server putpod putpod:8080

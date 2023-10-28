@@ -11,7 +11,7 @@ RUN useradd -ms /bin/bash putpod
 RUN addgroup --gid 1024 mygroup
 RUN usermod -a -G 1024 putpod
 
-#USER putpod
+USER putpod
 
 # set the working directory in the container
 WORKDIR /app
